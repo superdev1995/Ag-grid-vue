@@ -49,6 +49,7 @@
         :gridOptions="gridOptions"
         :columnDefs="columnDefs"
         :rowData="rowData"
+        :frameworkComponents="frameworkComponents"
         :sideBar="sideBar"
         :defaultColDef="{
                             sortable: true,
@@ -56,6 +57,7 @@
                             filter: true
                          }"
         :groupHeaders="true"
+        :suppressDragLeaveHidesColumns="true"
         :suppressRowClickSelection="true"
         :colResizeDefault="colResizeDefault"
         :multiSortKey="multiSortKey"
@@ -95,6 +97,15 @@ import DateComponent from "./DateComponent.vue";
 import HeaderGroupComponent from "./HeaderGroupComponent.vue";
 import RefData from "./refData";
 
+const selectData = [
+  "Football",
+  "Basketball",
+  "Golf",
+  "Pingpong",
+  "Swimming",
+  "Tenis"
+];
+
 export default {
   data() {
     return {
@@ -102,11 +113,12 @@ export default {
       columnDefs: null,
       rowData: null,
       showGrid: false,
-      sideBar: false,
+      sideBar: true,
       rowCount: null,
       colResizeDefault: null,
       defaultColDef: null,
-      multiSortKey: null
+      multiSortKey: null,
+      frameworkComponents: null
     };
   },
   components: {
@@ -130,6 +142,8 @@ export default {
             windows: Math.random() < 0.4,
             css: Math.random() < 0.4
           },
+          favorite:
+            selectData[Math.round(Math.random() * 100) % selectData.length],
           dob: RefData.DOBs[i % RefData.DOBs.length],
           address: RefData.ADDRESSES[i % RefData.ADDRESSES.length],
           years: Math.round(Math.random() * 100),
@@ -211,6 +225,22 @@ export default {
               width: 120,
               cellRenderer: percentCellRenderer,
               filter: ProficiencyFilter
+            }
+          ]
+        },
+        {
+          headerName: "Favorite Sports",
+          children: [
+            {
+              headerName: "Favorite",
+              field: "favorite",
+              width: 125,
+              editable: true,
+              sortable: true,
+              cellEditor: "agRichSelectCellEditor",
+              cellEditorParams: {
+                values: selectData
+              }
             }
           ]
         },
@@ -339,6 +369,7 @@ export default {
     this.defaultColDef = { resizable: true };
     this.colResizeDefault = "shift";
     this.multiSortKey = "ctrl";
+    this.frameworkComponents = {};
   }
 };
 
