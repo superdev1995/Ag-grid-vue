@@ -36,13 +36,13 @@
       </div>
       <div style="clear: both;"></div>
       <div style="padding: 4px;" class="toolbar">
-        <label>
-          <input type="checkbox" v-model="sideBar" />
-          Show Side Bar
-        </label>
         <button @click="createRowData()">Refresh Data</button>
       </div>
       <div style="clear: both;"></div>
+      <div class="test-header">
+        Selection:
+        <span id="selectedRows"></span>
+      </div>
       <ag-grid-vue
         style="height: 800px;"
         class="ag-theme-balham"
@@ -57,12 +57,13 @@
                             filter: true
                          }"
         :groupHeaders="true"
+        :icons="icons"
         :suppressDragLeaveHidesColumns="true"
         :suppressRowClickSelection="true"
         :colResizeDefault="colResizeDefault"
         :multiSortKey="multiSortKey"
         :animateRows="true"
-        rowSelection="multiple"
+        :rowSelection="rowSelection"
         @grid-ready="onReady"
         @model-updated="onModelUpdated"
         @cell-clicked="onCellClicked"
@@ -96,6 +97,7 @@ import { SkillFilter } from "./skillFilter";
 import DateComponent from "./DateComponent.vue";
 import HeaderGroupComponent from "./HeaderGroupComponent.vue";
 import RefData from "./refData";
+import CustomStatsToolPanel from "./customToolPanel.js";
 
 const selectData = [
   "Football",
@@ -118,6 +120,7 @@ export default {
       colResizeDefault: null,
       defaultColDef: null,
       multiSortKey: null,
+      rowSelection: null,
       frameworkComponents: null
     };
   },
@@ -161,21 +164,13 @@ export default {
     createColumnDefs() {
       this.columnDefs = [
         {
-          headerName: "",
-          width: 30,
-          checkboxSelection: true,
-          sortable: false,
-          suppressMenu: true,
-          pinned: true,
-          rowDrag: false
-        },
-        {
           headerName: "Employee",
           headerGroupComponentFramework: HeaderGroupComponent,
           children: [
             {
               headerName: "Name",
               field: "name",
+              headerCheckboxSelection: true,
               width: 150,
               pinned: true
             },
@@ -333,6 +328,21 @@ export default {
 
     onSelectionChanged() {
       console.log("selectionChanged");
+      var selectedRows = this.gridOptions.api.getSelectedRows();
+      var selectedRowsString = "";
+      selectedRows.forEach(function(selectedRow, index) {
+        if (index > 5) {
+          return;
+        }
+        if (index !== 0) {
+          selectedRowsString += ", ";
+        }
+        selectedRowsString += selectedRow.name;
+      });
+      if (selectedRows.length >= 5) {
+        selectedRowsString += " - and " + (selectedRows.length - 5) + " others";
+      }
+      document.querySelector("#selectedRows").innerHTML = selectedRowsString;
     },
 
     onFilterModified() {
@@ -369,7 +379,37 @@ export default {
     this.defaultColDef = { resizable: true };
     this.colResizeDefault = "shift";
     this.multiSortKey = "ctrl";
-    this.frameworkComponents = {};
+    this.icons = {
+      "custom-stats": '<span class="ag-icon ag-icon-custom-stats"></span>'
+    };
+    this.sideBar = {
+      toolPanels: [
+        {
+          id: "columns",
+          labelDefault: "Columns",
+          labelKey: "columns",
+          iconKey: "columns",
+          toolPanel: "agColumnsToolPanel"
+        },
+        {
+          id: "filters",
+          labelDefault: "Filters",
+          labelKey: "filters",
+          iconKey: "filter",
+          toolPanel: "agFiltersToolPanel"
+        },
+        {
+          id: "customStats",
+          labelDefault: "Custom Stats",
+          labelKey: "customStats",
+          iconKey: "custom-stats",
+          toolPanel: "customStatsToolPanel"
+        }
+      ],
+      defaultToolPanel: "customStats"
+    };
+    this.frameworkComponents = { customStatsToolPanel: CustomStatsToolPanel };
+    this.rowSelection = "multiple";
   }
 };
 
