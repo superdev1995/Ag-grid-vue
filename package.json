@@ -3,7 +3,8 @@
   "version": "21.2.0",
   "private": true,
   "scripts": {
-    "start": "npm run serve",
+    "postinstall": "yarn build",
+    "start": "node server.js",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "test": "vue-cli-service test:unit --env=jest-environment-jsdom-fourteen",

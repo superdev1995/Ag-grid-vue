@@ -1,0 +1,70 @@
+Arguments: 
+  /Users/webmaster/.nvm/versions/node/v11.10.1/bin/node /Users/webmaster/.yarn/bin/yarn.js install
+
+PATH: 
+  /Users/webmaster/.yarn/bin:/Users/webmaster/.config/yarn/global/node_modules/.bin:/Users/webmaster/.nvm/versions/node/v11.10.1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/webmaster/.yarn/bin:/Users/webmaster/.config/yarn/global/node_modules/.bin:/Users/webmaster/.nvm/versions/node/v11.10.1/bin
+
+Yarn version: 
+  1.19.1
+
+Node version: 
+  11.10.1
+
+Platform: 
+  darwin x64
+
+Trace: 
+  SyntaxError: /Users/webmaster/Documents/AG GRID/package.json: Unexpected token / in JSON at position 211
+      at JSON.parse (<anonymous>)
+      at /Users/webmaster/.yarn/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/Users/webmaster/.yarn/lib/cli.js:304:30)
+      at /Users/webmaster/.yarn/lib/cli.js:315:13
+
+npm manifest: 
+  {
+    "name": "ag-grid-vue-example",
+    "version": "21.2.0",
+    "private": true,
+    "scripts": {
+      "postinstall": "if test \"$NODE_ENV\" = \"production\" ; then npm run build ; fi ",
+      "start": "node server.js",
+  //    "start": "npm run serve",
+      "serve": "vue-cli-service serve",
+      "build": "vue-cli-service build",
+      "test": "vue-cli-service test:unit --env=jest-environment-jsdom-fourteen",
+      "test:debug": "node --inspect-brk ./node_modules/@vue/cli-service/bin/vue-cli-service.js test:unit"
+    },
+    "dependencies": {
+      "ag-grid-community": "^21.0.0",
+      "ag-grid-enterprise": "^21.0.0",
+      "ag-grid-vue": "^21.0.0",
+      "bootstrap": "3.4.1",
+      "express": "^4.17.1",
+      "serve-static": "^1.14.1",
+      "vue": "2.6.10",
+      "vue-property-decorator": "8.1.1",
+      "vue-router": "3.0.6"
+    },
+    "devDependencies": {
+      "@vue/cli-plugin-babel": "3.7.0",
+      "@vue/cli-plugin-unit-jest": "3.7.0",
+      "@vue/cli-service": "3.7.0",
+      "@vue/test-utils": "1.0.0-beta.29",
+      "babel-core": "7.0.0-bridge.0",
+      "babel-jest": "^23.6.0",
+      "jest-environment-jsdom-fourteen": "1.0.0-alpha.0",
+      "vue-template-compiler": "2.6.10"
+    },
+    "browserslist": [
+      "> 1%",
+      "last 2 versions",
+      "not ie <= 8"
+    ]
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
