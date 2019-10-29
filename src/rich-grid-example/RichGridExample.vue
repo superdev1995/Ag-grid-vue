@@ -37,14 +37,16 @@
       <div style="clear: both;"></div>
       <div style="padding: 4px;" class="toolbar">
         <button @click="createRowData()">Refresh Data</button>
+        <button
+          v-on:click="toggleStatusBarComp()"
+          style="margin-bottom: 10px"
+        >Toggle Status Bar Component</button>
+        <button @click="deleteSelected()">Delete</button>
       </div>
       <div style="clear: both;"></div>
-      <div class="test-header">
-        Selection:
-        <span id="selectedRows"></span>
-      </div>
+
       <ag-grid-vue
-        style="height: 800px;"
+        style="height: 700px;"
         class="ag-theme-balham"
         :gridOptions="gridOptions"
         :columnDefs="columnDefs"
@@ -57,12 +59,17 @@
                             filter: true
                          }"
         :groupHeaders="true"
+        :rowGroupPanelShow="rowGroupPanelShow"
+        :statusBar="statusBar"
+        :enableRangeSelection="true"
+        :enableCharts="true"
         :icons="icons"
         :suppressDragLeaveHidesColumns="true"
         :suppressRowClickSelection="true"
         :colResizeDefault="colResizeDefault"
         :multiSortKey="multiSortKey"
         :animateRows="true"
+        :groupSelectsChildren="true"
         :rowSelection="rowSelection"
         @grid-ready="onReady"
         @model-updated="onModelUpdated"
@@ -98,6 +105,7 @@ import DateComponent from "./DateComponent.vue";
 import HeaderGroupComponent from "./HeaderGroupComponent.vue";
 import RefData from "./refData";
 import CustomStatsToolPanel from "./customToolPanel.js";
+import CustomStatusBar from "./customStatusBar.js";
 
 const selectData = [
   "Football",
@@ -121,13 +129,26 @@ export default {
       defaultColDef: null,
       multiSortKey: null,
       rowSelection: null,
-      frameworkComponents: null
+      frameworkComponents: null,
+      autoGroupColumnDef: null,
+      rowGroupPanelShow: null,
+      statusBar: null
     };
   },
   components: {
     AgGridVue
   },
   methods: {
+    toggleStatusBarComp() {
+      let statusBarComponent = this.gridOptions.api.getStatusPanel(
+        "statusBarCompKey"
+      );
+      let componentInstance = statusBarComponent;
+      if (statusBarComponent.getFrameworkComponentInstance) {
+        componentInstance = statusBarComponent.getFrameworkComponentInstance();
+      }
+      componentInstance.setVisible(!componentInstance.isVisible());
+    },
     createRowData() {
       const rowData = [];
 
@@ -171,6 +192,8 @@ export default {
               headerName: "Name",
               field: "name",
               headerCheckboxSelection: true,
+              headerCheckboxSelectionFilteredOnly: true,
+              checkboxSelection: true,
               width: 150,
               pinned: true
             },
@@ -180,6 +203,7 @@ export default {
               width: 150,
               cellRenderer: countryCellRenderer,
               pinned: true,
+              enableRowGroup: true,
               filterParams: {
                 cellRenderer: countryCellRenderer,
                 cellHeight: 20
@@ -219,7 +243,8 @@ export default {
               field: "proficiency",
               width: 120,
               cellRenderer: percentCellRenderer,
-              filter: ProficiencyFilter
+              filter: ProficiencyFilter,
+              aggFunc: "avg"
             }
           ]
         },
@@ -232,6 +257,8 @@ export default {
               width: 125,
               editable: true,
               sortable: true,
+              pivot: true,
+              enablePivot: true,
               cellEditor: "agRichSelectCellEditor",
               cellEditorParams: {
                 values: selectData
@@ -339,10 +366,35 @@ export default {
         }
         selectedRowsString += selectedRow.name;
       });
-      if (selectedRows.length >= 5) {
+      if (selectedRows.length > 5) {
         selectedRowsString += " - and " + (selectedRows.length - 5) + " others";
       }
       document.querySelector("#selectedRows").innerHTML = selectedRowsString;
+    },
+
+    deleteSelected() {
+      var selectedData = this.gridOptions.api.getSelectedRows();
+      var res = this.gridOptions.api.updateRowData({ remove: selectedData });
+      this.printResult(res);
+    },
+
+    printResult(res) {
+      console.log("---------------------------------------");
+      if (res.add) {
+        res.add.forEach(function(rowNode) {
+          console.log("Added Row Node", rowNode);
+        });
+      }
+      if (res.remove) {
+        res.remove.forEach(function(rowNode) {
+          console.log("Removed Row Node", rowNode);
+        });
+      }
+      if (res.update) {
+        res.update.forEach(function(rowNode) {
+          console.log("Updated Row Node", rowNode);
+        });
+      }
     },
 
     onFilterModified() {
@@ -382,6 +434,7 @@ export default {
     this.icons = {
       "custom-stats": '<span class="ag-icon ag-icon-custom-stats"></span>'
     };
+    this.rowGroupPanelShow = "always";
     this.sideBar = {
       toolPanels: [
         {
@@ -408,8 +461,21 @@ export default {
       ],
       defaultToolPanel: "customStats"
     };
-    this.frameworkComponents = { customStatsToolPanel: CustomStatsToolPanel };
+    this.frameworkComponents = {
+      customStatsToolPanel: CustomStatsToolPanel,
+      customStatusBar: CustomStatusBar
+    };
     this.rowSelection = "multiple";
+
+    this.statusBar = {
+      statusPanels: [
+        {
+          statusPanel: "agTotalAndFilteredRowCountComponent",
+          align: "right"
+        },
+        { statusPanel: "customStatusBar", align: "left" }
+      ]
+    };
   }
 };
 
