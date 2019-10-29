@@ -516,6 +516,7 @@ function createRandomPhoneNumber() {
 }
 
 function percentCellRenderer(params) {
+  // Render proficient value as colored bar
   let value = params.value;
 
   let eDivPercentBar = document.createElement("div");
