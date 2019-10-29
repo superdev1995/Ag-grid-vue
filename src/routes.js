@@ -6,6 +6,6 @@ export default [
     components: {
       default: RichGridExample
     },
-    name: "Rich Grid with Pure JavaScript"
+    name: "Rich Grid with Vue"
   }
 ];

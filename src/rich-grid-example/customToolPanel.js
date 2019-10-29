@@ -43,6 +43,11 @@ export default Vue.extend({
   },
   methods: {
     renderStats() {
+      this.android = 0;
+      this.css = 0;
+      this.html5 = 0;
+      this.mac = 0;
+      this.windows = 0;
       this.params.api.forEachNode(rowNode => {
         const data = rowNode.data;
         if (data.skills.android) {

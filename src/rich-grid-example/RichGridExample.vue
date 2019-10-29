@@ -42,6 +42,17 @@
           style="margin-bottom: 10px"
         >Toggle Status Bar Component</button>
         <button @click="deleteSelected()">Delete</button>
+        <button @click="jsonExport()">Export JSON format</button>
+        <button @click="remoteDataFetch()">Get Remote Data</button>
+      </div>
+      <div style="padding: 4px;" class="toolbar">
+        <button v-on:click="saveFilterModel()">Save Filter Model</button>
+        <button v-on:click="restoreFilterModel()">Restore from Save</button>
+        <button v-on:click="clearFilters()">Clear Filters</button>
+      </div>
+      <div>
+        Saved Filters:
+        <span id="savedFilters">[]</span>
       </div>
       <div style="clear: both;"></div>
 
@@ -71,6 +82,9 @@
         :animateRows="true"
         :groupSelectsChildren="true"
         :rowSelection="rowSelection"
+        :localeText="localeText"
+        :floatingFilter="true"
+        :cacheQuickFilter="true"
         @grid-ready="onReady"
         @model-updated="onModelUpdated"
         @cell-clicked="onCellClicked"
@@ -98,6 +112,8 @@
 
 <script>
 import { AgGridVue } from "ag-grid-vue";
+import "ag-grid-enterprise/chartsModule";
+import "ag-grid-enterprise";
 
 import { ProficiencyFilter } from "./proficiencyFilter";
 import { SkillFilter } from "./skillFilter";
@@ -132,22 +148,78 @@ export default {
       frameworkComponents: null,
       autoGroupColumnDef: null,
       rowGroupPanelShow: null,
-      statusBar: null
+      statusBar: null,
+      localeText: null,
+      statusOpen: true
     };
   },
   components: {
     AgGridVue
   },
   methods: {
-    toggleStatusBarComp() {
-      let statusBarComponent = this.gridOptions.api.getStatusPanel(
-        "statusBarCompKey"
-      );
-      let componentInstance = statusBarComponent;
-      if (statusBarComponent.getFrameworkComponentInstance) {
-        componentInstance = statusBarComponent.getFrameworkComponentInstance();
+    clearFilters() {
+      this.gridOptions.api.setFilterModel(null);
+      this.gridOptions.api.onFilterChanged();
+    },
+    saveFilterModel() {
+      var savedFilters = "[]";
+      window.savedModel = this.gridOptions.api.getFilterModel();
+      if (window.savedModel) {
+        savedFilters = Object.keys(window.savedModel);
+      } else {
+        savedFilters = "-none-";
       }
-      componentInstance.setVisible(!componentInstance.isVisible());
+      document.querySelector("#savedFilters").innerHTML = JSON.stringify(
+        savedFilters
+      );
+    },
+    restoreFilterModel() {
+      this.gridOptions.api.setFilterModel(window.savedModel);
+      this.gridOptions.api.onFilterChanged();
+    },
+    remoteDataFetch() {
+      const httpRequest = new XMLHttpRequest();
+      const updateData = data => {
+        this.rowData = data;
+      };
+
+      httpRequest.open(
+        "GET",
+        "https://api.jsonbin.io/b/5db7a6d4edb21d6c6e15c0d8"
+      );
+      httpRequest.setRequestHeader(
+        "secret-key",
+        "$2b$10$122jYLOSv67bdE9yJInKNO1vldFFBXeazp/cRL1nzpB4Hnv3t2OOW"
+      );
+      httpRequest.send();
+      httpRequest.onreadystatechange = () => {
+        if (httpRequest.readyState === 4 && httpRequest.status === 200) {
+          updateData(JSON.parse(httpRequest.responseText));
+        }
+      };
+    },
+    downloadObjectAsJson(exportObj, exportName) {
+      var dataStr =
+        "data:text/json;charset=utf-8," +
+        encodeURIComponent(JSON.stringify(exportObj));
+      var downloadAnchorNode = document.createElement("a");
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", exportName + ".json");
+      document.body.appendChild(downloadAnchorNode); // required for firefox
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    },
+    jsonExport() {
+      this.downloadObjectAsJson(this.rowData, "jsonFormat.json");
+    },
+    toggleStatusBarComp() {
+      if (this.statusOpen) {
+        document.querySelector(".ag-status-bar").style = "display: none;";
+        this.statusOpen = false;
+      } else {
+        this.statusOpen = true;
+        document.querySelector(".ag-status-bar").style = "display: block;";
+      }
     },
     createRowData() {
       const rowData = [];
@@ -166,6 +238,9 @@ export default {
             windows: Math.random() < 0.4,
             css: Math.random() < 0.4
           },
+          commit2017: Math.round(Math.random() * 100),
+          commit2018: Math.round(Math.random() * 100),
+          commit2019: Math.round(Math.random() * 100),
           favorite:
             selectData[Math.round(Math.random() * 100) % selectData.length],
           dob: RefData.DOBs[i % RefData.DOBs.length],
@@ -195,6 +270,7 @@ export default {
               headerCheckboxSelectionFilteredOnly: true,
               checkboxSelection: true,
               width: 150,
+              filter: "text",
               pinned: true
             },
             {
@@ -207,7 +283,8 @@ export default {
               filterParams: {
                 cellRenderer: countryCellRenderer,
                 cellHeight: 20
-              }
+              },
+              filter: "text"
             },
             {
               headerName: "DOB",
@@ -223,7 +300,6 @@ export default {
                   params.value.getFullYear()
                 );
               },
-              filter: "agDateColumnFilter",
               columnGroupShow: "open"
             }
           ]
@@ -258,11 +334,44 @@ export default {
               editable: true,
               sortable: true,
               pivot: true,
+              filter: "text",
               enablePivot: true,
               cellEditor: "agRichSelectCellEditor",
               cellEditorParams: {
                 values: selectData
               }
+            }
+          ]
+        },
+        {
+          headerName: "Commit Counts",
+          children: [
+            {
+              headerName: "2017",
+              field: "commit2017",
+              width: 100,
+              editable: true,
+              sortable: true,
+              filter: "text",
+              enablePivot: true
+            },
+            {
+              headerName: "2018",
+              field: "commit2018",
+              width: 100,
+              editable: true,
+              sortable: true,
+              filter: "text",
+              enablePivot: true
+            },
+            {
+              headerName: "2019",
+              field: "commit2019",
+              width: 100,
+              editable: true,
+              sortable: true,
+              filter: "text",
+              enablePivot: true
             }
           ]
         },
@@ -475,6 +584,174 @@ export default {
         },
         { statusPanel: "customStatusBar", align: "left" }
       ]
+    };
+    this.localeText = {
+      page: "daPage",
+      more: "daMore",
+      to: "daTo",
+      of: "daOf",
+      next: "daNexten",
+      last: "daLasten",
+      first: "daFirsten",
+      previous: "daPreviousen",
+      loadingOoo: "daLoading...",
+      selectAll: "daSelect Allen",
+      searchOoo: "daSearch...",
+      blanks: "daBlanc",
+      filterOoo: "daFilter...",
+      applyFilter: "daApplyFilter...",
+      equals: "daEquals",
+      notEqual: "daNotEqual",
+      lessThan: "daLessThan",
+      greaterThan: "daGreaterThan",
+      lessThanOrEqual: "daLessThanOrEqual",
+      greaterThanOrEqual: "daGreaterThanOrEqual",
+      inRange: "daInRange",
+      contains: "daContains",
+      notContains: "daNotContains",
+      startsWith: "daStarts dawith",
+      endsWith: "daEnds dawith",
+      andCondition: "daAND",
+      orCondition: "daOR",
+      group: "laGroup",
+      columns: "laColumns",
+      filters: "laFilters",
+      rowGroupColumns: "laPivot Cols",
+      rowGroupColumnsEmptyMessage: "la drag cols to group",
+      valueColumns: "laValue Cols",
+      pivotMode: "laPivot-Mode",
+      groups: "laGroups",
+      values: "laValues",
+      pivots: "laPivots",
+      valueColumnsEmptyMessage: "la drag cols to aggregate",
+      pivotColumnsEmptyMessage: "la drag here to pivot",
+      toolPanelButton: "la tool panel",
+      noRowsToShow: "la no rows",
+      pinColumn: "laPin Column",
+      valueAggregation: "laValue Agg",
+      autosizeThiscolumn: "laAutosize Diz",
+      autosizeAllColumns: "laAutsoie em All",
+      groupBy: "laGroup by",
+      ungroupBy: "laUnGroup by",
+      resetColumns: "laReset Those Cols",
+      expandAll: "laOpen-em-up",
+      collapseAll: "laClose-em-up",
+      toolPanel: "laTool Panelo",
+      export: "laExporto",
+      csvExport: "laCSV Exportp",
+      excelExport: "laExcel Exporto (.xlsx)",
+      excelXmlExport: "laExcel Exporto (.xml)",
+      pivotChartAndPivotMode: "laPivot Chart & Pivot Mode",
+      pivotChart: "laPivot Chart",
+      chartRange: "laChart Range",
+      columnChart: "laColumn",
+      groupedColumn: "laGrouped",
+      stackedColumn: "laStacked",
+      normalizedColumn: "la100% Stacked",
+      barChart: "laBar",
+      groupedBar: "laGrouped",
+      stackedBar: "laStacked",
+      normalizedBar: "la100% Stacked",
+      pieChart: "laPie",
+      pie: "laPie",
+      doughnut: "laDoughnut",
+      line: "laLine",
+      xyChart: "laX Y (Scatter)",
+      scatter: "laScatter",
+      bubble: "laBubble",
+      areaChart: "laArea",
+      area: "laArea",
+      stackedArea: "laStacked",
+      normalizedArea: "la100% Stacked",
+      pinLeft: "laPin &lt;&lt;",
+      pinRight: "laPin &gt;&gt;",
+      noPin: "laDontPin &lt;&gt;",
+      sum: "laSum",
+      min: "laMin",
+      max: "laMax",
+      none: "laNone",
+      count: "laCount",
+      average: "laAverage",
+      filteredRows: "laFiltered",
+      selectedRows: "laSelected",
+      totalRows: "laTotal Rows",
+      totalAndFilteredRows: "laRows",
+      copy: "laCopy",
+      copyWithHeaders: "laCopy Wit hHeaders",
+      ctrlC: "ctrl n C",
+      paste: "laPaste",
+      ctrlV: "ctrl n V",
+      pivotChartTitle: "laPivot Chart",
+      rangeChartTitle: "laRange Chart",
+      settings: "laSettings",
+      data: "laData",
+      format: "laFormat",
+      categories: "laCategories",
+      series: "laSeries",
+      axis: "laAxis",
+      color: "laColor",
+      thickness: "laThickness",
+      xRotation: "laX Rotation",
+      yRotation: "laY Rotation",
+      ticks: "laTicks",
+      width: "laWidth",
+      length: "laLength",
+      padding: "laPadding",
+      chart: "laChart",
+      title: "laTitle",
+      font: "laFont",
+      top: "laTop",
+      right: "laRight",
+      bottom: "laBottom",
+      left: "laLeft",
+      labels: "laLabels",
+      size: "laSize",
+      legend: "laLegend",
+      position: "laPosition",
+      markerSize: "laMarker Size",
+      markerStroke: "laMarker Stroke",
+      markerPadding: "laMarker Padding",
+      itemPaddingX: "laItem Padding X",
+      itemPaddingY: "laItem Padding Y",
+      strokeWidth: "laStroke Width",
+      offset: "laOffset",
+      tooltips: "laTooltips",
+      offsets: "laOffsets",
+      callout: "laCallout",
+      markers: "laMarkers",
+      shadow: "laShadow",
+      blur: "laBlur",
+      xOffset: "laX Offset",
+      yOffset: "laY Offset",
+      lineWidth: "laLine Width",
+      normal: "laNormal",
+      bold: "laBold",
+      italic: "laItalic",
+      boldItalic: "laBold Italic",
+      fillOpacity: "laFill Opacity",
+      strokeOpacity: "laLine Opacity",
+      columnGroup: "laColumn",
+      barGroup: "laBar",
+      pieGroup: "laPie",
+      lineGroup: "laLine",
+      scatterGroup: "laScatter",
+      areaGroup: "laArea",
+      groupedColumnTooltip: "laGrouped",
+      stackedColumnTooltip: "laStacked",
+      normalizedColumnTooltip: "la100% Stacked",
+      groupedBarTooltip: "laGrouped",
+      stackedBarTooltip: "laStacked",
+      normalizedBarTooltip: "la100% Stacked",
+      pieTooltip: "laPie",
+      doughnutTooltip: "laDoughnut",
+      lineTooltip: "laLine",
+      groupedAreaTooltip: "laGrouped",
+      stackedAreaTooltip: "laStacked",
+      normalizedAreaTooltip: "la100% Stacked",
+      scatterTooltip: "laScatter",
+      bubbleTooltip: "laBubble",
+      noDataToChart: "laNo data available to be charted.",
+      pivotChartRequiresPivotMode: "laPivot Chart requires Pivot Mode enabled."
     };
   }
 };
