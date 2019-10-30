@@ -185,16 +185,46 @@ export default {
 
       httpRequest.open(
         "GET",
-        "https://api.jsonbin.io/b/5db7a6d4edb21d6c6e15c0d8"
+        "https://vevpmxwtrdivehf.form.io/user/submission?limit=100"
       );
       httpRequest.setRequestHeader(
-        "secret-key",
-        "$2b$10$122jYLOSv67bdE9yJInKNO1vldFFBXeazp/cRL1nzpB4Hnv3t2OOW"
+        "x-jwt-token",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb3JtIjp7Il9pZCI6IjU1M2RiOTRlNzJmNzAyZTcxNGRkOTc3OSIsInByb2plY3QiOiI1NTNkYjkyZjcyZjcwMmU3MTRkZDk3NzgifSwidXNlciI6eyJfaWQiOiI1ZGI4ZWJlOThkNzU4NjY3MWNhZDQ3YTciLCJyb2xlcyI6WyI1NWNkNWMzY2E1MWE5NmJlZjk5ZWY1NTEiLCI1ZGI4ZWMyMWIwNTA1YmNjNDZmNzZhMjAiLCI1ZGI4ZWZjMjQwMjU1ODAwY2E0MDkzMDkiXX0sInByb2plY3QiOnsiX2lkIjoiNTUzZGI5MmY3MmY3MDJlNzE0ZGQ5Nzc4In0sImlhdCI6MTU3MjQyOTcyMywiZXhwIjoxNjA4NzE3NzIzfQ.tvvkB9BwYH1hSN9bK3_JtCMGOvG5BAqu45AQrByxD1Q"
       );
       httpRequest.send();
       httpRequest.onreadystatechange = () => {
         if (httpRequest.readyState === 4 && httpRequest.status === 200) {
-          updateData(JSON.parse(httpRequest.responseText));
+          const response = JSON.parse(httpRequest.responseText);
+          var data = [];
+          for (var i = 0; i < response.length; i++) {
+            const user = response[i].data;
+            data.push({
+              name: user.name,
+              skills: {
+                android: user.skills.android === true ? true : false,
+                html5: user.skills.html5 === true ? true : false,
+                mac: user.skills.mac === true ? true : false,
+                windows: user.skills.windows === true ? true : false,
+                css: user.skills.css === true ? true : false
+              },
+              commit2017: Math.round(Math.random() * 100),
+              commit2018: Math.round(Math.random() * 100),
+              commit2019: Math.round(Math.random() * 100),
+              favorite: user.favoriteSports,
+              dob: user.columnsDob,
+              address:
+                "1197 Thunder Wagon Common, Cataract, RI, 02987-1016, US, (401) 747-0763",
+              years: user.columnsColumnsYears,
+              proficiency: user.columnsColumnsProficienty,
+              country: user.country,
+              continent: "Europe",
+              language: user.columnsLanguage,
+              mobile: user.phoneNumber,
+              landline: user.columnsLandline
+            });
+          }
+
+          updateData(data);
         }
       };
     },

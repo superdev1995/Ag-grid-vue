@@ -11,7 +11,7 @@ import routes from "./routes";
 import "ag-grid-enterprise";
 import { LicenseManager } from "ag-grid-enterprise";
 LicenseManager.setLicenseKey(
-  "Adcore_Desarrollo_y_Comunicación_S.L_Siturweb_1Devs1_SaaS_18_April_2020__MTU1NTU0MjAwMDAwMA==3c5a3b0fcc94ec4a5bd5452284b614df"
+  "Evaluation_License_Not_For_Production_29_December_2019__MTU3NzU3NzYwMDAwMA==a3a7a7e770dea1c09a39018caf2c839c"
 );
 
 Vue.use(VueRouter);
